@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Village Game - Sign Up</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="b.css">
+    <script>
+        function validateForm(event) {
+            // Prevent form submission
+            event.preventDefault();
+
+            // Get the Date of Birth value
+            const dobInput = document.getElementById('dob').value;
+            if (!dobInput) {
+                alert('Please enter your Date of Birth.');
+                return;
+            }
+
+            // Calculate age
+            const dob = new Date(dobInput);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+
+            // Check if age is over 18
+            if (age < 18) {
+                alert('You must be at least 18 years old to sign up.');
+            } else {
+                alert('Sign-up successful!');
+                document.getElementById('signupForm').submit(); // Submit the form
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="background">
+        <div class="container">
+            <div class="signup-box">
+                <h2>Join the Village</h2>
+                <form id="signupForm" action="menu.html">
+                    <div class="textbox">
+                        <i class="fas fa-user"></i>
+                        <input type="text" placeholder="Enter your Name" required>
+                    </div>
+                    <div class="textbox">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" placeholder="Enter your Email" required>
+                    </div>
+                    <div class="textbox">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" placeholder="Enter your Mobile Number" required>
+                    </div>
+                    <div class="textbox">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" placeholder="Enter your Password" required>
+                    </div>
+                    <div class="textbox">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" placeholder="Confirm Password" required>
+                    </div>
+                    <div class="textbox">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input id="dob" type="date" required>
+                    </div>
+                    <input id="signup" type="button" value="Signup" onclick="validateForm(event)">
+                </form>
+                <p>Already have an account? <a href="a.html">Login</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

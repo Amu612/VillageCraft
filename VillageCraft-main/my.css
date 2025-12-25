@@ -1,0 +1,162 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #000000;
+}
+
+/* Top Menu Styles */
+.menu-top {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  padding: 15px 30px; /* Increase padding for larger buttons */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Coin Counter and XP Styles */
+.coin-counter,
+.xp {
+  position: fixed;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 200px;
+}
+
+.coin-counter {
+  top: 20px;
+  right: 20px;
+}
+
+.xp {
+  top: 100px;
+  right: 20px;
+}
+
+.coin-counter img,
+.xp img {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.coin-counter .count,
+.xp .count {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+
+
+/* Bottom Menu Styles */
+.menu-bottom {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: rgba(50, 180, 250, 0.3); /* Transparent greyish blue */
+  padding: 10px 0;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+}
+
+/* Button Styles */
+.menu-bottom button {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 18px; /* Adjust padding for larger buttons */
+  margin: 0 5px;
+  font-size: 18px; /* Increase font size */
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border-radius: 50%; /* Make buttons circular */
+  width: 60px; /* Increase width for larger circular buttons */
+  height: 60px; /* Increase height for larger circular buttons */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Icon inside Button */
+.menu-bottom button img {
+  width: 30px;
+  height: 30px;
+}
+
+/* Hover Effect */
+.menu-bottom button:hover {
+  background-color: #f8f8f8; /* Lower the hover color intensity */
+  color: #fff;
+}
+
+/* Button Text Below */
+.menu-bottom button span {
+  display: block;
+  font-size: 12px;
+  color: #333;
+  margin-top: 8px; /* Add space between button and text */
+}
+
+/* New Plan Dropdown */
+#new-plan-options {
+  display: none; /* Hidden initially */
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  top: -300px;
+  left: 600px;
+  z-index: 999;
+  padding: 10px;
+}
+
+#new-plan-options button {
+  padding: 10px;
+  margin: 5px;
+  width: 180px;
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .menu-bottom button {
+    font-size: 16px; /* Slightly smaller font on smaller screens */
+    padding: 15px; /* Adjust padding for circular buttons */
+    width: 55px;
+    height: 55px;
+  }
+
+  .menu-bottom button span {
+    font-size: 12px; /* Adjust text size for smaller screens */
+  }
+
+  .coin-counter {
+    padding: 5px;
+  }
+
+  .coin-counter img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .coin-counter .count {
+    font-size: 16px;
+  }
+}
