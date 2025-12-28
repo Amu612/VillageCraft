@@ -4,24 +4,39 @@ VillageCraft is a web-based village building and simulation game that allows use
 🚀 Features
 
   🏠 3D Village Building using .glb models
+  
   🖱️ Drag & Drop Placement of village elements
+  
   💾 Save & Load Game State
+  
   📱 Responsive Design (Desktop & Mobile supported)
+  
   ⚡ Offline Support (PWA) using Service Workers
+  
   🎮 Multiple Interaction Modes (build, drop, save)
+  
   🧩 Modular JavaScript architecture
+
 
  🎯 Use Cases
 
   Educational village planning simulations
+  
   Prototype for city/village-building games
+  
   Hackathons & academic projects
+  
   Foundation for AI/Smart village expansion
+
 
 🔮 Future Enhancements
 
   🌱 Smart resource management
+  
   🤖 AI-based village optimization
+  
   🌍 Environmental impact simulation
+  
   🗺️ Larger maps & multiple villages
+  
   ☁️ Cloud save & multiplayer support
