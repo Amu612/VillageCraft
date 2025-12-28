@@ -6,15 +6,16 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.126.1/examples/jsm/loaders
 
 // Scene Setup
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb); // sky blue
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 // Updated camera position for closer initial view
-camera.position.set(0, 100, 0); // Adjust based on your map's dimensions
+camera.position.set(0, 60, 80); // Adjust based on your map's dimensions
 camera.lookAt(0, 0, 0); // Look at the map's center
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+document.getElementById("map-container").appendChild(renderer.domElement);
 
 // Lighting
 const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -29,14 +30,9 @@ controls.target.set(0, 0, 0); // Adjust if needed based on the map's center
 controls.update();
 
 // Optional: Adjust zoom for a closer perspective
-camera.zoom = 8; // Adjust the zoom level
+camera.lookAt(0, 0, 0);
+camera.zoom = 1; // Adjust the zoom level
 camera.updateProjectionMatrix();
-
-// Grid Helper
-// const gridSize = 100;
-// const gridDivisions = 25;
-// const gridHelper = new THREE.GridHelper(gridSize, gridDivisions);
-// scene.add(gridHelper);
 
 // Draggable Objects Array
 const draggableObjects = [];
@@ -49,69 +45,409 @@ function snapToGrid(value) {
   return Math.round(value / snapGridSize) * snapGridSize;
 }
 
+/* ===============================
+   GAME STATE (UI + ECONOMY)
+================================ */
+
+const gameState = {
+  crafties: 1000,
+  streetLightBuilt: false,
+  houseBuilt: false,
+  customModelBuilt: false,
+  happiness : 0,
+};
+
+/* ===============================
+   UI REFERENCES (BUILD PANEL)
+================================ */
+
+const planPanel = document.getElementById("new-plan-options");
+const newPlanBtn = document.getElementById("NewPlan");
+const coinCountEl = document.getElementById("coinCount");
+
 // Raycaster and Mouse Vector
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+window.addEventListener("pointerdown", onPointerDown);
+
+function onPointerDown(event) {
+
+  // 🛑 BLOCK ALL UI CLICKS
+  if (
+    event.target.closest("#context-actions") ||
+    event.target.closest(".close-panel") ||
+    event.target.closest(".menu-bottom") ||
+    event.target.closest(".menu-top")
+  ) {
+    return;
+  }
+
+  // ✅ ALWAYS update mouse FIRST
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+
+  /* ======================
+     ROAD MODE (STRICT)
+  ====================== */
+  if (roadMode) {
+    const hits = raycaster.intersectObject(terrain);
+    if (!hits.length) return;
+
+    const point = hits[0].point.clone();
+    point.y = 0.02; // lock to ground
+
+    roadPoints.push(point);
+
+    // Draw segment only if we have 2+ points
+    if (roadPoints.length >= 2) {
+      const p1 = roadPoints[roadPoints.length - 2];
+      const p2 = roadPoints[roadPoints.length - 1];
+      const segment = createRoadSegment(p1, p2);
+      currentRoadSegments.push(segment);
+    }
+
+    return;
+  }
+
+  /* ======================
+     NORMAL SELECTION
+  ====================== */
+  const intersects = raycaster.intersectObjects(draggableObjects, true);
+
+  if (!intersects.length) {
+    contextPanel.style.display = "none";
+    selectedObject = null;
+    return;
+  }
+
+  let obj = intersects[0].object;
+  while (obj.parent && !obj.userData.type) obj = obj.parent;
+  if (!obj.userData.type) return;
+
+  selectedObject = obj;
+
+  const pos = worldToScreen(obj.position, camera);
+  contextPanel.style.left = `${pos.x + 20}px`;
+  contextPanel.style.top = `${pos.y - 40}px`;
+  contextPanel.style.display = "flex";
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && roadMode) {
+    finalizeRoad();
+  }
+});
+
+function finalizeRoad() {
+  if (roadPoints.length < 2) {
+    roadMode = false;
+    return;
+  }
+
+  buildSmoothRoadFromPoints(roadPoints);
+
+  // Calculate total cost
+  let totalCost = 0;
+  currentRoadSegments.forEach(seg => {
+    totalCost += seg.userData.cost;
+  });
+
+  if (gameState.crafties < totalCost) {
+    alert("Not enough crafties for this road!");
+    // rollback
+    currentRoadSegments.forEach(seg => {
+      scene.remove(seg);
+      draggableObjects.splice(draggableObjects.indexOf(seg), 1);
+    });
+  } else {
+    gameState.crafties -= totalCost;
+    updateCrafties();
+  }
+
+  // Reset state
+  roadPoints = [];
+  currentRoadSegments = [];
+  roadMode = false;
+  hideRoadUI();
+}
+
+function createRoadSegment(p1, p2) {
+  const ROAD_WIDTH = 4;
+
+  const direction = new THREE.Vector3().subVectors(p2, p1);
+  const length = direction.length();
+  const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+
+  const geometry = new THREE.PlaneGeometry(length, ROAD_WIDTH);
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x2f2f2f,
+    side: THREE.DoubleSide
+  });
+
+  const segment = new THREE.Mesh(geometry, material);
+
+  segment.rotation.x = -Math.PI / 2;
+  segment.rotation.z = Math.atan2(direction.z, direction.x);
+  segment.position.set(mid.x, 0.02, mid.z);
+
+  segment.userData = {
+    type: "road",
+    cost: Math.round(length)
+  };
+
+  scene.add(segment);
+  draggableObjects.push(segment);
+
+  initializeDragControls();
+  return segment;
+}
+
+document.getElementById("deleteObject").addEventListener("click", (e) => {
+  e.stopPropagation(); // 🔥 CRITICAL
+
+  if (!selectedObject) return;
+
+  const refund = selectedObject.userData?.cost || 0;
+
+  gameState.crafties += refund;
+  updateCrafties();
+
+  scene.remove(selectedObject);
+
+  const index = draggableObjects.indexOf(selectedObject);
+  if (index !== -1) draggableObjects.splice(index, 1);
+
+  selectedObject = null;
+  contextPanel.style.display = "none";
+
+  calculateHappiness();
+});
+
+document.getElementById("duplicateObject").addEventListener("click", (e) => {
+  e.stopPropagation(); // 🔥 CRITICAL
+
+  if (!selectedObject) return;
+
+  const cost = selectedObject.userData?.cost || 0;
+  if (gameState.crafties < cost) {
+    alert("Not enough crafties!");
+    return;
+  }
+
+  gameState.crafties -= cost;
+  updateCrafties();
+
+  const clone = selectedObject.clone(true);
+
+  clone.traverse(child => {
+    if (child.isMesh) {
+      child.material = child.material.clone();
+      child.geometry = child.geometry.clone();
+    }
+  });
+
+  clone.position.copy(selectedObject.position);
+  clone.position.x += 10;
+  clone.position.z += 10;
+
+  clone.userData = { ...selectedObject.userData };
+
+  scene.add(clone);
+  draggableObjects.push(clone);
+
+  initializeDragControls();
+  calculateHappiness();
+});
+
+const exitRoadBtn = document.getElementById("ExitRoad");
+
+document.getElementById("Road").addEventListener("click", () => {
+  roadMode = true;
+  roadPoints = [];
+  exitRoadBtn.style.display = "inline-block";
+});
+
+exitRoadBtn.addEventListener("click", () => {
+  roadMode = false;
+  roadPoints = [];
+  hideRoadUI();
+});
+
+function hideRoadUI() {
+  exitRoadBtn.style.display = "none";
+}
+
+exitRoadBtn.addEventListener("click", finalizeRoad);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && roadMode) {
+
+    // remove unfinished segments
+    currentRoadSegments.forEach(seg => {
+      scene.remove(seg);
+      draggableObjects.splice(draggableObjects.indexOf(seg), 1);
+    });
+
+    roadPoints = [];
+    currentRoadSegments = [];
+    roadMode = false;
+    hideRoadUI();
+  }
+});
+
+function buildSmoothRoadFromPoints(points) {
+  if (points.length < 2) return;
+
+  // ❌ remove broken preview segments
+  currentRoadSegments.forEach(seg => {
+    scene.remove(seg);
+    draggableObjects.splice(draggableObjects.indexOf(seg), 1);
+  });
+
+  currentRoadSegments = [];
+
+  // 🧠 Create smooth curve
+  const curve = new THREE.CatmullRomCurve3(points);
+  curve.curveType = "catmullrom";
+  curve.tension = 0.5; // smoothness (0.3–0.7 ideal)
+
+  // Sample points along curve
+  const divisions = points.length * 12;
+  const curvePoints = curve.getPoints(divisions);
+
+  const ROAD_WIDTH = 4;
+
+  const geometry = new THREE.BufferGeometry();
+  const vertices = [];
+  const indices = [];
+
+  for (let i = 0; i < curvePoints.length; i++) {
+    const p = curvePoints[i];
+
+    const tangent = curve.getTangent(i / curvePoints.length);
+    const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+
+    const left = p.clone().add(normal.multiplyScalar(ROAD_WIDTH / 2));
+    const right = p.clone().add(normal.multiplyScalar(-ROAD_WIDTH / 2));
+
+    vertices.push(
+      left.x, 0.02, left.z,
+      right.x, 0.02, right.z
+    );
+
+    if (i < curvePoints.length - 1) {
+      const a = i * 2;
+      const b = a + 1;
+      const c = a + 2;
+      const d = a + 3;
+
+      indices.push(a, b, c);
+      indices.push(b, d, c);
+    }
+  }
+
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(vertices, 3)
+  );
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x2f2f2f,
+    side: THREE.DoubleSide
+  });
+
+  const road = new THREE.Mesh(geometry, material);
+
+  road.userData = {
+    type: "road",
+    cost: Math.round(curve.getLength())
+  };
+
+  scene.add(road);
+  draggableObjects.push(road);
+
+  initializeDragControls();
+}
 
 let selectedObject = null;
 
-// Mouse Click Handler
-function onMouseClick(event) {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+const contextPanel = document.getElementById("context-actions");
 
-  raycaster.setFromCamera(mouse, camera);
+let roadMode = false;
+let roadPoints = [];
+let currentRoadSegments = [];
+let currentRoad = null;
 
-  const intersects = raycaster.intersectObjects(draggableObjects, true);
-  if (intersects.length > 0) {
-    selectedObject = intersects[0].object;
-    console.log('Object selected:', selectedObject);
-  } else {
-    selectedObject = null;
-    console.log('No object selected');
+function getRootBuildObject(obj) {
+  while (obj.parent && !obj.userData.type) {
+    obj = obj.parent;
   }
+  return obj.userData.type ? obj : null;
 }
 
-// // Delete Selected Object
-// function deleteSelectedObject() {
-//   if (selectedObject) {
-//     scene.remove(selectedObject);
-//     const index = draggableObjects.indexOf(selectedObject);
-//     if (index > -1) draggableObjects.splice(index, 1);
-//     console.log('Object deleted:', selectedObject);
-//     selectedObject = null;
-//   } else {
-//     console.log('No object selected to delete');
-//   }
-// }
-// Delete the last object added to the scene
-function deleteLastObject() {
-  if (draggableObjects.length > 0) {
-    const lastObject = draggableObjects.pop(); // Remove the last object from the array
-    scene.remove(lastObject); // Remove it from the scene
-    console.log('Last object deleted:', lastObject);
-  } else {
-    console.log('No objects to delete');
-  }
+function calculateHappiness() {
+  const houses = draggableObjects.filter(o => o.userData.type === "house").length;
+  const lights = draggableObjects.filter(o => o.userData.type === "streetLight").length;
+  const customs = draggableObjects.filter(o => o.userData.type === "customModel").length;
+
+  let happiness = 0;
+
+  // Housing (max 40)
+  happiness += Math.min(houses * 10, 40);
+
+  // Safety & infrastructure (max 30)
+  happiness += Math.min(lights * 7, 30);
+
+  // Balanced development bonus
+  if (houses > 0 && lights > 0) happiness += 10;
+
+  // Overbuilding penalty
+  if (customs > houses * 2) happiness -= 10;
+
+  // Resource efficiency
+  if (gameState.crafties > 200) happiness += 10;
+  else if (gameState.crafties < 50) happiness -= 10;
+
+  gameState.happiness = Math.max(0, Math.min(100, happiness));
+
+  document.querySelector(".xp .count").textContent =
+    `Happiness-${gameState.happiness}`;
 }
 
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
-// Add Event Listener for Mouse Clicks
-window.addEventListener('click', onMouseClick);
+function worldToScreen(position, camera) {
+  const vector = position.clone().project(camera);
+
+  return {
+    x: (vector.x * 0.5 + 0.5) * window.innerWidth,
+    y: (-vector.y * 0.5 + 0.5) * window.innerHeight
+  };
+}
 
 // Initialize Drag Controls
 function initializeDragControls() {
+  if (dragControls) dragControls.dispose();
+
   dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
 
-  dragControls.addEventListener('dragstart', () => {
+  dragControls.addEventListener("dragstart", () => {
     controls.enabled = false;
+    contextPanel.style.display = "none";
   });
 
-  dragControls.addEventListener('dragend', (event) => {
+  dragControls.addEventListener("dragend", (event) => {
     controls.enabled = true;
-    const object = event.object;
-    object.position.x = snapToGrid(object.position.x);
-    object.position.z = snapToGrid(object.position.z);
+
+    event.object.position.x = snapToGrid(event.object.position.x);
+    event.object.position.z = snapToGrid(event.object.position.z);
   });
 }
 
@@ -120,18 +456,35 @@ let terrain; // Declare terrain in a shared scope
 async function createTerrain() {
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load('./lalpur_c.png');
-  const geometry = new THREE.PlaneGeometry(100, 100, 256 - 1, 256 - 1);
+
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+
+  const SIZE = 200; // ⬅️ IMPORTANT (bigger map)
+
+  const geometry = new THREE.PlaneGeometry(SIZE, SIZE);
   geometry.rotateX(-Math.PI / 2);
 
   const material = new THREE.MeshStandardMaterial({
     map: texture,
     roughness: 1,
-    metalness: 0,
+    metalness: 0
   });
 
-  terrain = new THREE.Mesh(geometry, material); // Assign the terrain to the shared variable
+  terrain = new THREE.Mesh(geometry, material);
+  terrain.receiveShadow = true;
+  terrain.userData.isTerrain = true;
+
   scene.add(terrain);
 
+  // 🔥 FIX CAMERA
+  controls.target.set(0, 0, 0);
+  camera.position.set(0, 120, 120);
+  camera.lookAt(0, 0, 0);
+  controls.update();
+
+  scene.add(terrain);
+  setAerialView();
   initializeDragControls();
 }
 
@@ -189,50 +542,27 @@ params.append("point_y", "30");
 
 // Add Block Functionality
 function addNewMesh() {
+  const COST = 40;
+
   const box = new THREE.Mesh(
     new THREE.BoxGeometry(5, 5, 5),
     new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff })
   );
-  box.position.set(Math.random() * 50 - 25, 2.6, Math.random() * 50 - 25);
-  //box.position.set(10,2.6,30);
-  // localStorage.setItem("10",point_x);
-  // localStorage.setItem("30",point_z);
+
+  box.position.set(
+    Math.random() * 50 - 25,
+    2.6,
+    Math.random() * 50 - 25
+  );
+
+  box.userData = {
+    type: "customModel",
+    cost: COST
+  };
+
   draggableObjects.push(box);
   scene.add(box);
-
-   console.log('New block added to the scene.');
 }
-// Add Model as a Block
-
-// function addNewMesh() {
-//   const loader = new GLTFLoader();
-//   const modelUrl = './models/brick.glb'; // Replace with the path to your desired model
-
-//   loader.load(
-//     modelUrl,
-//     (gltf) => {
-//       const model = gltf.scene;
-
-//       // Randomly position the model within bounds
-//       model.position.set(
-//         Math.random() * 50 - 25, // Random X position
-//         0, // Place on the ground
-//         Math.random() * 50 - 25 // Random Z position
-//       );
-
-//       draggableObjects.push(model);
-//       scene.add(model);
-
-//       // Add the model to drag controls
-//       dragControls.objects.push(model);
-
-//       console.log('New model added to the scene.');
-//     },
-//     undefined,
-//     (error) => console.error('Error loading model:', error)
-//   );
-// }
-
 
 // Save and Load State
 function saveState() {
@@ -276,87 +606,51 @@ function addModel(url, position = { x: 0, y: 0, z: 0 }) {
   );
 }
 
-// function addMarker(position) {
-//   const geometry = new THREE.SphereGeometry(2, 16, 16);
-//   const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red color
-//   const marker = new THREE.Mesh(geometry, material);
-//   marker.position.copy(position);
-//   scene.add(marker);
-//   marker.push(marker);
-//   console.log('Marker added at:', position);
-// }
+function createRoadBetweenTwoPoints(p1, p2) {
 
-// function createRoad() {
-//   if (markers.length < 2) return; // Wait until two markers are added
+  const ROAD_WIDTH = 4;
 
-//   // Get the positions of the two markers
-//   const start = markers[0].position;
-//   const end = markers[1].position;
+  // Direction vector
+  const direction = new THREE.Vector3().subVectors(p2, p1);
+  const length = direction.length();
 
-//   // Calculate the midpoint and length of the road
-//   const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-//   const length = start.distanceTo(end);
+  // Midpoint
+  const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
 
-//   // Create the road geometry (thin rectangular box)
-//   const geometry = new THREE.BoxGeometry(length, 1, 5); // Length x Thickness x Width
-//   const material = new THREE.MeshBasicMaterial({ color: 0x808080 }); // Gray color
-//   const road = new THREE.Mesh(geometry, material);
+  // Geometry
+  const geometry = new THREE.PlaneGeometry(length, ROAD_WIDTH);
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x2f2f2f,
+    side: THREE.DoubleSide
+  });
 
-//   // Position and rotate the road
-//   road.position.copy(midpoint);
-//   road.lookAt(end); // Align road with the end marker
-//   road.rotateX(Math.PI / 2); // Adjust rotation to lay flat
-//   scene.add(road);
-//   roads.push(road);
+  const road = new THREE.Mesh(geometry, material);
 
-//   // Remove markers after creating the road (optional)
-//   // markers.forEach((marker) => scene.remove(marker));
+  // Flat on ground
+  road.rotation.x = -Math.PI / 2;
 
-//   // Clear markers array after use (optional)
-//   markers = []; // Clear markers array
+  // Rotate EXACTLY toward second point
+  road.rotation.z = Math.atan2(direction.z, direction.x);
 
-//   console.log('Road created between markers:', start, end);
-// }
+  // Place exactly between points
+  road.position.set(mid.x, 0.02, mid.z);
 
-function onScreenClick(event) {
-  // Convert click to normalized device coordinates (NDC)
-  const mouse = new THREE.Vector2(
-      (event.clientX / window.innerWidth) * 2 - 1,
-      -(event.clientY / window.innerHeight) * 2 + 1
-  );
+  road.userData = {
+    type: "road",
+    cost: Math.round(length)
+  };
 
-  // Raycast to find intersected objects
-  const raycaster = new THREE.Raycaster();
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObject(terrain); // Assuming `terrain` is the ground object
+  scene.add(road);
+  draggableObjects.push(road);
 
-  if (intersects.length > 0) {
-      const position = intersects[0].point; // Get the intersection point
-      addMarker(position);
-
-      if (markers.length === 2) {
-          createRoad(); // Create a road after two markers are added
-      }
-  }
+  initializeDragControls();
 }
 
-// Add event listener for user clicks
-window.addEventListener('click', onScreenClick);
-
-
-// // Toolbar
-// const toolbar = document.createElement('div');
-// toolbar.style.position = 'fixed';
-// toolbar.style.top = '10px';
-// toolbar.style.left = '10px';
-// toolbar.style.backgroundColor = '#333';
-// toolbar.style.color = 'white';
-// toolbar.style.padding = '10px';
-// toolbar.style.borderRadius = '5px';
-// toolbar.style.display = 'flex';
-// toolbar.style.gap = '10px';
-// toolbar.style.alignItems = 'center';
-// document.body.appendChild(toolbar);
+document.getElementById("closeContextPanel").addEventListener("click", (e) => {
+  e.stopPropagation();        // 🔥 BLOCK scene click
+  contextPanel.style.display = "none";
+  selectedObject = null;
+});
 
 // Dropdown for Model Selection
 const dropdown = document.createElement('select');
@@ -391,44 +685,18 @@ models.forEach((model) => {
   dropdown.appendChild(option);
 });
 
-// // Create Toolbar Button
-// function createToolbarButton(label, onClick) {
-//   const button = document.createElement('button');
-//   button.textContent = label;
-//   button.style.backgroundColor = '#555';
-//   button.style.color = 'white';
-//   button.style.border = 'none';
-//   button.style.padding = '5px 10px';
-//   button.style.cursor = 'pointer';
-//   button.style.borderRadius = '5px';
-//   button.addEventListener('click', onClick);
-//   toolbar.appendChild(button);
-// }
-
-// Toolbar Buttons
-// // createToolbarButton('Add Block', addNewMesh);
-// createToolbarButton('Add Model', () => {
-//   dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-// });
-// createToolbarButton('Save State', saveState);
-// createToolbarButton('Load State', loadState);
-// createToolbarButton('Delete Object', deleteLastObject);
-
-// Append Dropdown to Toolbar
-// toolbar.appendChild(dropdown);
-
 // PWA Install Button Logic
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  createToolbarButton('Install App', () => {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      console.log('User choice:', choiceResult.outcome);
-      deferredPrompt = null;
-    });
-  });
+  // createToolbarButton('Install App', () => {
+  //   deferredPrompt.prompt();
+  //   deferredPrompt.userChoice.then((choiceResult) => {
+  //     console.log('User choice:', choiceResult.outcome);
+  //     deferredPrompt = null;
+  //   });
+  // });
 });
 
 function myFun()
@@ -448,7 +716,7 @@ tree2.position.set(10, 0, 0);
 scene.add(tree2);
 
 // Use the function to draw the path between the trees
-drawPath(tree1.position, tree2.position);
+// drawPath(tree1.position, tree2.position);
 
 
 // Create a popup modal for model selection
@@ -503,90 +771,133 @@ function showModelPopup() {
 
   document.body.appendChild(modal);
 }
-
-// Camera position
-camera.position.z = 30;
 }
-  document.addEventListener('DOMContentLoaded', () => {
-    // Fetch the button element
-    // Toggle display of New Plan options
-document.getElementById('NewPlan').addEventListener('click', () => {
-    const options = document.getElementById('new-plan-options');
-    options.style.display = options.style.display === 'none' ? 'block' : 'none';
-});
 
-// Option 1: Add a Tree
-document.getElementById('Option1').addEventListener('click', () => {
-  localStorage.setItem("place","streetlight");
-  fetchJSONData();
-  const loader = new GLTFLoader();
-  const modelUrl = './models/street_lamp.glb'; // Replace with the desired model path
-  loader.load(
-      modelUrl,
-      (gltf) => {
-          const model = gltf.scene;
-          model.position.set(Math.random() * 50 - 25, 2.6, Math.random() * 50 - 25);;
-          draggableObjects.push(model);
-          scene.add(model);
-          console.log('Custom model added to the scene.');
-      },
-      undefined,
-      (error) => console.error('Error loading model:', error)
-  );
-});
+document.addEventListener('DOMContentLoaded', () => {
 
-// Option 2: Add a House
-document.getElementById('Option2').addEventListener('click', () => {
-  const loader = new GLTFLoader();
-  const modelUrl = './models/brickhouse.glb';
-  loader.load(
-      modelUrl,
-      (gltf) => {
-          const model = gltf.scene;
-          model.position.set(20, 0, 20);
-          draggableObjects.push(model);
-          scene.add(model);
-          console.log('Custom model added to the scene.');
-      },
-      undefined,
-      (error) => console.error('Error loading model:', error)
-  );
-});
-
-// Option 3: Add a Custom Model
-document.getElementById('Option3').addEventListener('click', () => {
-
-  console.log("print in click");
-    // const loader = new GLTFLoader();
-    // const modelUrl = './models/custom_model.glb'; // Replace with the desired model path
-    // loader.load(
-    //     modelUrl,
-    //     (gltf) => {
-    //         const model = gltf.scene;
-    //         model.position.set(20, 0, 20);
-    //         draggableObjects.push(model);
-    //         scene.add(model);
-    //         console.log('Custom model added to the scene.');
-    //     },
-    //     undefined,
-    //     (error) => console.error('Error loading model:', error)
-    // );
-    localStorage.setItem("place","building");
-    fetchJSONData();
-});
-
-    document.getElementById('Road').addEventListener('click', myFun);
-    document.getElementById('Save').addEventListener('click', saveState);
-    document.getElementById('Load').addEventListener('click', loadState);
-    document.getElementById('Delete').addEventListener('click', deleteLastObject);
-
-    // const button = document.getElementById('NewPlan');
-    // // Assign a click event
-    // button.addEventListener('click', () => {
-    //     console.log('Button clicked!');
-    //     addNewMesh();
-    // });
+  // ROAD BUTTON — ENTER ROAD MODE
+  const roadBtn = document.getElementById("Road");
+  roadBtn.addEventListener("click", () => {
+    roadMode = true;
+    roadPoints = [];
+    alert("Road mode ON: click on ground to draw road");
   });
+
+  // SAVE / LOAD
+  document.getElementById('Save').addEventListener('click', saveState);
+  document.getElementById('Load').addEventListener('click', loadState);
+});
+
+  /* ===============================
+   BUILD ACTIONS (UI → GAME → 3D)
+================================ */
+
+function updateCrafties() {
+  coinCountEl.textContent = `crafties-${gameState.crafties}`;
+}
+
+window.buildStreetLight = function () {
+  const COST = 20;
+
+  if (gameState.crafties < COST) {
+    alert("Not enough crafties!");
+    return;
+  }
+
+  gameState.crafties -= COST;
+  updateCrafties();
+
+  const loader = new GLTFLoader();
+  loader.load('./models/street_lamp.glb', (gltf) => {
+    const group = new THREE.Group();
+    group.add(gltf.scene);
+
+    group.position.set(
+      Math.random() * 50 - 25,
+      0,
+      Math.random() * 50 - 25
+    );
+
+    group.userData = {
+      type: "streetLight",
+      cost: COST
+    };
+
+    draggableObjects.push(group);
+    scene.add(group);
+
+    dragControls.dispose();
+    initializeDragControls();
+
+    calculateHappiness();
+  });
+};
+
+window.buildHouse = function () {
+  const COST = 30;
+
+  if (gameState.crafties < COST) {
+    alert("Not enough crafties!");
+    return;
+  }
+
+  gameState.crafties -= COST;
+  updateCrafties();
+
+  const loader = new GLTFLoader();
+  loader.load('./models/brickhouse.glb', (gltf) => {
+    const group = new THREE.Group();
+    group.add(gltf.scene);
+
+    group.position.set(20, 0, 20);
+
+    group.userData = {
+      type: "house",
+      cost: COST
+    };
+
+    draggableObjects.push(group);
+    scene.add(group);
+
+    dragControls.dispose();
+    initializeDragControls();
+
+    calculateHappiness();
+  });
+};
+
+
+window.buildCustomModel = function () {
+  if (gameState.customModelBuilt) return;
+
+  const COST = 40;
+  if (gameState.crafties < COST) {
+    alert("Not enough crafties!");
+    return;
+  }
+
+  gameState.crafties -= COST;
+  gameState.customModelBuilt = true;
+  updateCrafties();
+
+  const group = new THREE.Group();
+  addNewMesh();
+  updateCrafties();
+  calculateHappiness();
+};
+
+  /* ===============================
+   BUILD PANEL CONTROLS100
+    ================================ */
+
+    newPlanBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      planPanel.style.display = "flex";
+    });
+
+    window.closeBuildPanel = function () {
+      planPanel.style.display = "none";
+    };
 
 // Render Loop
 function animate() {
@@ -596,6 +907,20 @@ function animate() {
 }
 animate();
 
+function setAerialView() {
+  controls.enabled = false;
+
+  camera.position.set(0, 250, 0.01); // straight above
+  camera.lookAt(0, 0, 0);
+
+  controls.target.set(0, 0, 0);
+  controls.update();
+
+  setTimeout(() => {
+    controls.enabled = true;
+  }, 100);
+}
+
+
 // Initialize Terrain
 createTerrain();
-  

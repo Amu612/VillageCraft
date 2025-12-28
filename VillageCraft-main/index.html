@@ -6,12 +6,19 @@
     <title>Three.js Base Map with Coin Counter</title>
     <link rel="stylesheet" href="my.css">
 </head>
+<!-- Context Actions (appears on object select) -->
+<div id="context-actions" style="display:none;">
+    <div class="builds"><h2 class="build-header">Operations</h2><button class="close-panel" id="closeContextPanel">✕</button><p></p></div>
+    <button id="duplicateObject">➕ Duplicate</button>
+    <button id="deleteObject">🗑️ Delete</button>
+</div>
+
 <body>
     <!-- Top Menu -->
     <nav class="menu-top">
         <div class="coin-counter">
-            <img src="coin.jpg" alt="Coin">
-            <div class="count">crafties-100</div>
+            <img src="coin.jpg" alt="Gold Coin" class="coin-icon">
+            <div class="count" id="coinCount">crafties-1000</div>
         </div>
         <div class="xp">
             <img src="xp.jpg" alt="xp">
@@ -29,10 +36,12 @@
         <button id="NewPlan">
             <img src="plan.png" alt="New Plan">
         </button>
-        <div id="new-plan-options">
-            <button id="Option1">Add Street Light</button>
-            <button id="Option2">Add House</button>
-            <button id="Option3">Add Custom Model</button>
+        <div id="new-plan-options" class="build-panel">
+            <div class="builds"><h2 class="build-header">BUILD</h2><button class="close-panel" onclick="closeBuildPanel()">✕</button><p></p></div>
+            <button id="Option1" class="build-action" onclick="buildStreetLight()">💡 Build Street Light</button>
+            <button class="build-action primary" onclick="buildHouse()">🏠 Build House</button>
+            <button id="Option3" class="build-action" onclick="buildCustomModel()">🧱 Build Custom Model</button>
+            <button id="ExitRoad" style="display:none;">❌ Exit Road Mode</button>
         </div>
 
         <button id="Road">
@@ -44,12 +53,7 @@
         <button id="Load">
             <img src="load.png" alt="Load">
         </button>
-        <button id="Delete">
-            <img src="delete.png" alt="Delete">
-        </button>
     </nav>
-
-    
 
     <script type="module" src="script.js"></script>
 </body>

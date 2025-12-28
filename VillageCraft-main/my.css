@@ -62,16 +62,60 @@ body {
   margin: 0;
 }
 
+.coin {
+  filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+  transform: rotateX(15deg) rotateY(-15deg);
+}
 
+.coin:hover {
+  transform: rotateX(0deg) rotateY(0deg) scale(1.05);
+}
+
+.coin-icon {
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+
+  /* 3D feel */
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.45));
+  transform: rotateX(15deg) rotateY(-20deg);
+  transition: transform 0.2s ease;
+}
+
+.coin-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Small interaction = game feel */
+.coin-counter:hover .coin-icon {
+  transform: rotateX(0deg) rotateY(0deg) scale(1.08);
+}
+
+.coin-icon {
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+}
+@keyframes coinPop {
+  0% { transform: scale(1) rotateX(15deg); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1) rotateX(15deg); }
+}
+
+.coin-pop {
+  animation: coinPop 0.3s ease;
+}
 
 /* Bottom Menu Styles */
 .menu-bottom {
   position: fixed;
   bottom: 0;
   width: 100%;
-  background-color: rgba(50, 180, 250, 0.3); /* Transparent greyish blue */
   padding: 10px 0;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   display: flex;
   justify-content: center;
@@ -114,25 +158,93 @@ body {
   margin-top: 8px; /* Add space between button and text */
 }
 
-/* New Plan Dropdown */
+/* ===============================
+   BUILD PANEL – FINAL WORKING
+================================ */
+
 #new-plan-options {
-  display: none; /* Hidden initially */
+  display: none;                 /* CLOSED BY DEFAULT */
+  position: fixed;
+  bottom: 90px;
+  right: 40px;
+
+  width: 360px;
+  padding: 48px 20px 20px;
+
+  background: linear-gradient(160deg, #0b1220, #020617);
+  border-radius: 18px;
+
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.65);
+  z-index: 9999;
+
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ❌ CLOSE BUTTON — TOP RIGHT, NO OVERLAP */
+#new-plan-options .close-panel {
   position: absolute;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  top: -300px;
-  left: 600px;
-  z-index: 999;
-  padding: 10px;
+  top: 14px;
+  right: 16px;
+
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+
+  font-size: 22px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
-#new-plan-options button {
-  padding: 10px;
-  margin: 5px;
-  width: 180px;
+.close-panel:hover {
+  color: #ffffff;
 }
 
+/* ===============================
+   BUILD BUTTONS – CLEAN, ALIGNED
+================================ */
+
+#new-plan-options .build-action,
+#new-plan-options .build-btn {
+  width: 100%;
+  min-height: 68px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 18px 22px;
+  border-radius: 14px;
+
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  color: #ffffff;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.build-btn-txt {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+#new-plan-options .build-action:hover,
+#new-plan-options .build-btn:hover {
+  background: linear-gradient(145deg, #334155, #1e293b);
+  transform: translateY(-2px);
+}
+
+/* PRIMARY BUTTON */
+#new-plan-options .build-btn {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -159,4 +271,125 @@ body {
   .coin-counter .count {
     font-size: 16px;
   }
+}
+
+/* FORCE WHITE TEXT FOR ALL BUILD OPTIONS */
+
+#new-plan-options .build-action,
+#new-plan-options .build-btn {
+  color: #ffffff !important;
+}
+
+#new-plan-options .build-action span,
+#new-plan-options .build-btn span {
+  color: #ffffff !important;
+}
+
+.build-header {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.builds {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.close-panel {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 22px;
+  cursor: pointer;
+  margin-bottom: 30px;
+}
+
+#new-plan-options p {
+  display: none;
+}
+
+/* ===============================
+   CONTEXT ACTION PANEL (OPERATIONS)
+================================ */
+
+#context-actions {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+
+  min-width: 260px;
+  padding: 16px 18px 18px;
+
+  background: linear-gradient(160deg, #0b1220, #020617);
+  border-radius: 18px;
+
+  box-shadow:
+    0 30px 60px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+
+  z-index: 10000;
+}
+
+/* Header row */
+#context-actions .builds {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#context-actions .build-header {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+/* Close button */
+#context-actions .close-panel {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+}
+
+#context-actions .close-panel:hover {
+  color: #ffffff;
+}
+
+/* Action buttons */
+#context-actions button:not(.close-panel) {
+  width: 100%;
+  padding: 14px 16px;
+
+  border-radius: 14px;
+  border: none;
+
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+
+  color: #ffffff;
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#context-actions button:not(.close-panel):hover {
+  background: linear-gradient(145deg, #334155, #1e293b);
+}
+
+#map-container {
+  width: 100vw;
+  height: calc(100vh - 140px); /* accounts for top & bottom menus */
+  position: relative;
+  overflow: hidden;
 }
