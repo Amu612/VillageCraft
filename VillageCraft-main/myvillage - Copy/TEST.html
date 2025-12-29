@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag and Drop with Undo/Redo</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 100px);
+            grid-auto-rows: 100px;
+            gap: 1px;
+            background-color: #ccc;
+        }
+
+        .grid-cell {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+        }
+
+        .draggable {
+            width: 100px;
+            height: 100px;
+            cursor: grab;
+            position: absolute;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin: 0 5px;
+            padding: 10px 15px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button id="undo-btn">Undo</button>
+        <button id="redo-btn">Redo</button>
+    </div>
+
+    <div id="grid" class="grid-container">
+        <!-- Generate grid cells dynamically in JavaScript -->
+    </div>
+
+    <img src="./assets/img.png" class="draggable" draggable="true" id="image1" style="top: 10px; left: 10px;">
+    <img src="./assets/img1.png" class="draggable" draggable="true" id="image2" style="top: 10px; left: 120px;">
+
+    <script>
+        const grid = document.getElementById('grid');
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+
+        const stateStack = [];
+        let currentIndex = -1;
+
+        // Create the grid
+        const rows = 10;
+        const cols = 10;
+
+        for (let i = 0; i < rows * cols; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('grid-cell');
+            grid.appendChild(cell);
+        }
+
+        // Track draggable elements
+        const draggables = document.querySelectorAll('.draggable');
+        let currentElement = null;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        // Save state
+        function saveState() {
+            const state = Array.from(draggables).map(el => ({
+                id: el.id,
+                top: el.style.top,
+                left: el.style.left
+            }));
+            stateStack.splice(currentIndex + 1); // Remove redo states
+            stateStack.push(state);
+            currentIndex++;
+        }
+
+        // Restore state
+        function restoreState(index) {
+            if (index >= 0 && index < stateStack.length) {
+                const state = stateStack[index];
+                state.forEach(item => {
+                    const el = document.getElementById(item.id);
+                    el.style.top = item.top;
+                    el.style.left = item.left;
+                });
+            }
+        }
+
+        // Event listeners for dragging
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', e => {
+                currentElement = e.target;
+                offsetX = e.offsetX;
+                offsetY = e.offsetY;
+            });
+
+            draggable.addEventListener('dragend', e => {
+                if (currentElement) {
+                    const gridRect = grid.getBoundingClientRect();
+
+                    // Snap to grid
+                    const left = Math.round((e.clientX - gridRect.left - offsetX) / 100) * 100;
+                    const top = Math.round((e.clientY - gridRect.top - offsetY) / 100) * 100;
+
+                    currentElement.style.left = ${Math.max(0, left)}px;
+                    currentElement.style.top = ${Math.max(0, top)}px;
+                    saveState();
+                }
+                currentElement = null;
+            });
+        });
+
+        // Undo and Redo
+        undoBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                restoreState(currentIndex);
+            }
+        });
+
+        redoBtn.addEventListener('click', () => {
+            if (currentIndex < stateStack.length - 1) {
+                currentIndex++;
+                restoreState(currentIndex);
+            }
+        });
+
+        // Initialize state
+        saveState();
+    </script>
+
+</body>
+</html>
