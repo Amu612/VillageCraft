@@ -1,0 +1,403 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #000000;
+}
+
+/* Top Menu Styles */
+.menu-top {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  padding: 15px 30px; /* Increase padding for larger buttons */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Coin Counter and XP Styles */
+.coin-counter,
+.xp {
+  position: fixed;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 200px;
+}
+
+.coin-counter {
+  top: 20px;
+  right: 20px;
+}
+
+.xp {
+  top: 100px;
+  right: 20px;
+}
+
+.coin-counter img,
+.xp img {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.coin-counter .count,
+.xp .count {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.coin {
+  filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+  transform: rotateX(15deg) rotateY(-15deg);
+}
+
+.coin:hover {
+  transform: rotateX(0deg) rotateY(0deg) scale(1.05);
+}
+
+.coin-icon {
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+
+  /* 3D feel */
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.45));
+  transform: rotateX(15deg) rotateY(-20deg);
+  transition: transform 0.2s ease;
+}
+
+.coin-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Small interaction = game feel */
+.coin-counter:hover .coin-icon {
+  transform: rotateX(0deg) rotateY(0deg) scale(1.08);
+}
+
+.coin-icon {
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+}
+@keyframes coinPop {
+  0% { transform: scale(1) rotateX(15deg); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1) rotateX(15deg); }
+}
+
+.coin-pop {
+  animation: coinPop 0.3s ease;
+}
+
+/* Bottom Menu Styles */
+.menu-bottom {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  padding: 10px 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.menu-bottom {
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+}
+
+/* Button Styles */
+.menu-bottom button {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 18px; /* Adjust padding for larger buttons */
+  margin: 0 5px;
+  font-size: 18px; /* Increase font size */
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border-radius: 50%; /* Make buttons circular */
+  width: 60px; /* Increase width for larger circular buttons */
+  height: 60px; /* Increase height for larger circular buttons */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Icon inside Button */
+.menu-bottom button img {
+  width: 30px;
+  height: 30px;
+}
+
+/* Hover Effect */
+.menu-bottom button:hover {
+  background-color: #f8f8f8; /* Lower the hover color intensity */
+  color: #fff;
+}
+
+/* Button Text Below */
+.menu-bottom button span {
+  display: block;
+  font-size: 12px;
+  color: #333;
+  margin-top: 8px; /* Add space between button and text */
+}
+
+/* ===============================
+   BUILD PANEL – FINAL WORKING
+================================ */
+
+#new-plan-options {
+  display: none;                 /* CLOSED BY DEFAULT */
+  position: fixed;
+  bottom: 90px;
+  right: 40px;
+
+  width: 360px;
+  padding: 48px 20px 20px;
+
+  background: linear-gradient(160deg, #0b1220, #020617);
+  border-radius: 18px;
+
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.65);
+  z-index: 9999;
+
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ❌ CLOSE BUTTON — TOP RIGHT, NO OVERLAP */
+#new-plan-options .close-panel {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+
+  font-size: 22px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.close-panel:hover {
+  color: #ffffff;
+}
+
+/* ===============================
+   BUILD BUTTONS – CLEAN, ALIGNED
+================================ */
+
+#new-plan-options .build-action,
+#new-plan-options .build-btn {
+  width: 100%;
+  min-height: 68px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 18px 22px;
+  border-radius: 14px;
+
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  color: #ffffff;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.build-btn-txt {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+#new-plan-options .build-action:hover,
+#new-plan-options .build-btn:hover {
+  background: linear-gradient(145deg, #334155, #1e293b);
+  transform: translateY(-2px);
+}
+
+/* PRIMARY BUTTON */
+#new-plan-options .build-btn {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .menu-bottom button {
+    font-size: 16px; /* Slightly smaller font on smaller screens */
+    padding: 15px; /* Adjust padding for circular buttons */
+    width: 55px;
+    height: 55px;
+  }
+
+  .menu-bottom button span {
+    font-size: 12px; /* Adjust text size for smaller screens */
+  }
+
+  .coin-counter {
+    padding: 5px;
+  }
+
+  .coin-counter img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .coin-counter .count {
+    font-size: 16px;
+  }
+}
+
+/* FORCE WHITE TEXT FOR ALL BUILD OPTIONS */
+
+#new-plan-options .build-action,
+#new-plan-options .build-btn {
+  color: #ffffff !important;
+}
+
+#new-plan-options .build-action span,
+#new-plan-options .build-btn span {
+  color: #ffffff !important;
+}
+
+.build-header {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.builds {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.close-panel {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 22px;
+  cursor: pointer;
+  margin-bottom: 30px;
+}
+
+#new-plan-options p {
+  display: none;
+}
+
+/* ===============================
+   CONTEXT ACTION PANEL (OPERATIONS)
+================================ */
+
+#context-actions {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+
+  min-width: 260px;
+  padding: 16px 18px 18px;
+
+  background: linear-gradient(160deg, #0b1220, #020617);
+  border-radius: 18px;
+
+  box-shadow:
+    0 30px 60px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+
+  z-index: 10000;
+}
+
+/* Header row */
+#context-actions .builds {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#context-actions .build-header {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+/* Close button */
+#context-actions .close-panel {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+}
+
+#context-actions .close-panel:hover {
+  color: #ffffff;
+}
+
+/* Action buttons */
+#context-actions button:not(.close-panel) {
+  width: 100%;
+  padding: 14px 16px;
+
+  border-radius: 14px;
+  border: none;
+
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+
+  color: #ffffff;
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#context-actions button:not(.close-panel):hover {
+  background: linear-gradient(145deg, #334155, #1e293b);
+}
+
+#map-container {
+  width: 100vw;
+  height: calc(100vh - 140px); /* accounts for top & bottom menus */
+  position: relative;
+  overflow: hidden;
+}

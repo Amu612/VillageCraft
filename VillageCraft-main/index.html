@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Base Map with Coin Counter</title>
+    <link rel="stylesheet" href="my.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<!-- Context Actions (appears on object select) -->
+<div id="context-actions" style="display:none;">
+    <div class="builds"><h2 class="build-header">Operations</h2><button class="close-panel" id="closeContextPanel">✕</button><p></p></div>
+    <button id="duplicateObject">➕ Duplicate</button>
+    <button id="deleteObject">🗑️ Delete</button>
+</div>
+
+<body>
+    <!-- Top Menu -->
+    <nav class="menu-top">
+        <div class="coin-counter">
+            <img src="coin.jpg" alt="Gold Coin" class="coin-icon">
+            <div class="count" id="coinCount">crafties-1000</div>
+        </div>
+        <div class="xp">
+            <img src="xp.jpg" alt="xp">
+            <div class="count">Happiness-0</div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <div id="map-container"></div>
+    </main>
+
+    <!-- Bottom Menu -->
+    <nav class="menu-bottom">
+        <button id="NewPlan">
+            <img src="plan.png" alt="New Plan">
+        </button>
+        <div id="new-plan-options" class="build-panel">
+            <div class="builds"><h2 class="build-header">BUILD</h2><button class="close-panel" onclick="closeBuildPanel()">✕</button><p></p></div>
+            <button id="Option1" class="build-action" onclick="buildStreetLight()">💡 Build Street Light</button>
+            <button class="build-action primary" onclick="buildHouse()">🏠 Build House</button>
+            <button id="Option3" class="build-action" onclick="buildCustomModel()">🧱 Build Custom Model</button>
+            <button id="PlantTree" class="build-action"><i class="fa-solid fa-tree"></i>Plant Tree</button>
+        </div>
+
+        <button id="Road">
+            <img src="road.png" alt="Road">
+        </button>
+        <label >Lane Width</label>
+        <input id="laneWidth" type="range" min="4" max="12" step="1" value="6">
+        <span id="laneValue">6</span>
+        <button id="Save">
+            <img src="save.png" alt="Save">
+        </button>
+        <button id="Load">
+            <img src="load.png" alt="Load">
+        </button>
+    </nav>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

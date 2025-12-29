@@ -1,0 +1,85 @@
+body {
+    font-family: Arial, sans-serif;
+    background: url('a.jpg') no-repeat center center fixed; 
+    background-size: cover;
+    height: 100vh;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+}
+/* Container for the entire content */
+.container {
+    max-width: 1000px;
+    margin: 50px auto;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Heading styles */
+.heading {
+    font-size: 50px;
+    font-weight: bold;
+    color: #131111; /* Orange color for the heading */
+    margin-bottom: 40px;
+}
+.accordion-container {
+    width: 80%;
+    margin: 0 auto;
+    padding-top: 30px;
+}
+
+.accordion {
+    border: 1px solid #ddd;
+    margin: 10px 0;
+    border-radius: 8px;
+}
+
+.accordion-button {
+    background-color: #0a090a;
+    opacity: 0.3;
+    color: white;
+    opacity:0.5;
+    padding: 15px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.accordion-button:hover {
+    background-color: #0056b3;
+}
+
+.accordion-content {
+    padding: 20px;
+    background-color: #110f0f;
+    opacity:0.7;
+    display: none;
+    border-top: 1px solid #ddd;
+    color:rgb(255, 255, 255);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #d6d2d2;
+   
+}
+
+table th {
+    background-color: #007bff;
+    color: rgb(250, 244, 244);
+}
+
+table tr:hover {
+    background-color: #a9a5a5;
+    opacity: 0.5;
+}
