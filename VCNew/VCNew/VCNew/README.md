@@ -1,8 +1,86 @@
-# VillageCraft
-Village Craft is a game developed in the form of a web app, specifically addressing problem statement 1704 of the Smart India Hackathon 2024. Me and my team and JavaChip qualified for the Grand Finale and presented this project on the big stage. Our main aim was the gamification of rural development. The goal was to educate the village youth on the development of their lands, so they can understand and openly give their suggestions to the Gram Panchayat. While this project is not in its finished and polished form, this repository consists of the front end and the main logic of the game. The user data is stored on our college servers.
+# 🧭 Village Craft
+**Gamifying Rural Development through Drone Land Survey Maps & 3D Simulation**
 
-Many droneland image survey maps were provided by the Ministry of Panchayti Raj. We extracted one of the maps and hosted it in our game. We used the Three.js JavaScript library for game logic like placing objects and hosting the map. 
+> **Smart India Hackathon 2024 (Problem Statement 1704)**
 
-The game is hosted as a website/webapp on Vercel. We decided to create a web app so it can be easily supported across platforms. The webapp is installable on Windows, Linux, and Android OS.
+Village Craft is an immersive, 3D web-based simulation platform designed to bridge the gap between rural development planning and community engagement. By utilizing real-world drone imagery and GIS data, the platform allows village youth and stakeholders to visualize, plan, and suggest infrastructure improvements directly to the Gram Panchayat in a gamified, intuitive environment.
 
-[Click](https://village-craft.vercel.app/) to go to the game.
+---
+
+## ✨ Key Features
+
+### 🗺️ Procedural 3D Environment
+- **Real-World GIS Mapping**: Uses GeoJSON architectural data and high-resolution satellite texture maps (`lalpur_c.png`) to recreate actual village layouts.
+- **Drone Land Survey Integration**: Renders 3D buildings and structures directly from drone-surveyed spatial coordinates.
+- **Adaptive Terrain**: A custom 3D displacement map system ensures buildings and roads sit realistically on the terrain surface.
+
+### 🛣️ Advanced Road System
+- **Curved Path Generation**: Implements a Bezier/Catmull-Rom spline system for smooth, non-linear road layouts.
+- **Node-Based Connectivity**: Roads intelligently snap to shared endpoints (nodes).
+- **Automated Junctions**: Procedurally generates T-junctions and intersections when 3+ roads meet at a single node.
+
+### 🏗️ Construction & Management
+- **Unity-Style UI**: A premium, glassmorphism-based interface with structured zones (HUD, Resource Bar, Tool Panels).
+- **Resource Management**: Track Energy (⚡), Happiness (😊), and Budget (💰) in real-time.
+- **Dynamic Building Tools**: 
+    - **Build Tool**: Place houses, street-lights, and trees with animated growth effects.
+    - **Bulldozer**: Remove structures and reclaim a portion of the budget.
+    - **Upgrade Tool**: Visual and functional upgrades for existing infrastructure.
+
+### 🔁 Persistence & History
+- **Undo/Redo System**: A robust action stack that tracks every placement, upgrade, and deletion.
+- **State Management**: Centralized game state handling for consistent resource tracking.
+
+---
+
+## 🛠️ Technical Stack
+- **Engine**: [Three.js](https://threejs.org/) (WebGL)
+- **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3 (Glassmorphism design)
+- **Data Formats**: GeoJSON (Buildings), PNG (Terrain/Displacement Maps), GLB/GLTF (3D Models)
+- **Icons & UI**: FontAwesome, Google Fonts (Inter/Outfit)
+
+---
+
+## 🚀 Installation & Local Development
+
+1. **Clone the Project**
+   ```bash
+   git clone https://github.com/[your-username]/VillageCraft.git
+   cd VillageCraft
+   ```
+
+2. **Run Local Server**
+   Since the project uses ES Modules, you need a local server. You can use Python's built-in server:
+   ```bash
+   # Python 3
+   python -m http.server 8000
+   ```
+   Or using Node.js `serve`:
+   ```bash
+   npx serve .
+   ```
+
+3. **Open in Browser**
+   Visit `http://localhost:8000` to start the simulation.
+
+---
+
+## ⌨️ Controls
+| Action | Control |
+| :--- | :--- |
+| **Move Camera** | Right Click + Drag |
+| **Rotate Camera** | Left Click + Drag (No Tool) |
+| **Zoom** | Mouse Wheel |
+| **Place Object** | Left Click (Tool Active) |
+| **Finalize Road** | Drag & Release |
+| **Demolish** | Hover + Click (Bulldozer) |
+
+---
+
+## 📜 Problem Statement 1704
+*Ministry of Panchayati Raj*
+**Objective:** To empower the village youth by providing a gamified interface for rural planning using drone land survey maps and GIS data. This ensures that youth can understand and openly contribute their suggestions for the development of their lands.
+
+---
+
+*Note: This project is an ongoing simulation prototype.*
