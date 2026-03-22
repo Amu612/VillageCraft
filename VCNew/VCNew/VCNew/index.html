@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Village Craft</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="my.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body>
+    <!-- Top Resource Bar -->
+    <div id="hud-top" class="glass-panel">
+        <div id="game-logo" style="position:absolute; left:25px; top:50%; transform:translateY(-50%); font-weight:800; font-size:24px; color:#fff; text-transform:uppercase; letter-spacing:2px; pointer-events:none;">
+            Village <span style="color:#00ffcc;">Craft</span>
+        </div>
+        <div class="resource-item" title="Energy Level">
+            <i class="fa-solid fa-bolt" style="color:#00ffcc;"></i>
+            <span class="res-num" id="energyCount">1000</span>
+        </div>
+        <div class="resource-item" title="Happiness">
+            <i class="fa-solid fa-face-smile" style="color:#ffcc00;"></i>
+            <span class="res-num" id="happinessCount">75%</span>
+        </div>
+        <div class="resource-item" title="Budget">
+            <i class="fa-solid fa-coins" style="color:#ffcc00;"></i>
+            <span class="res-num" id="coinCount">50000</span>
+        </div>
+    </div>
+
+    <!-- Left Tool Panel -->
+    <div id="hud-left" class="glass-panel">
+        <button class="tool-btn active" id="tool-road" title="Road Tool"><i class="fa-solid fa-road"></i></button>
+        <button class="tool-btn" id="tool-build" title="Build Structures"><i class="fa-solid fa-hammer"></i></button>
+        <button class="tool-btn" id="tool-bulldoze" title="Bulldozer"><i class="fa-solid fa-tractor"></i></button>
+        <button class="tool-btn" id="tool-upgrade" title="Upgrade Tool"><i class="fa-solid fa-arrow-up-right-dots"></i></button>
+    </div>
+
+    <!-- Right Properties Panel -->
+    <div id="hud-right" class="glass-panel">
+        <div id="prop-road" class="prop-section">
+            <h3>Road Settings</h3>
+            <div class="prop-row">
+                <label>Width: <span id="laneValue">6</span>m</label>
+                <input id="laneWidth" type="range" min="4" max="12" step="1" value="6">
+            </div>
+            <div class="prop-row">
+                <label>Type</label>
+                <select id="roadType">
+                    <option value="street">Street</option>
+                    <option value="highway">Highway</option>
+                    <option value="dirt">Dirt</option>
+                </select>
+            </div>
+            <div class="prop-row">
+                <label>Elevated</label>
+                <input type="checkbox" id="roadElevation">
+            </div>
+            <div class="cost-preview">Cost: <span id="roadCostPreview">0</span> 💰</div>
+        </div>
+
+        <div id="prop-build" class="prop-section" style="display:none;">
+            <h3>Structures</h3>
+            <div class="build-grid">
+                <button class="build-item" onclick="buildHouse()">🏠 House<br><span>30 💰</span></button>
+                <button class="build-item" onclick="buildStreetLight()">💡 Light<br><span>20 💰</span></button>
+                <button class="build-item" id="PlantTree">🌲 Tree<br><span>10 💰</span></button>
+                <button class="build-item" onclick="buildCustomModel()">🧱 Box<br><span>40 💰</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div id="hud-bottom" class="glass-panel">
+        <button class="action-btn" id="btn-undo" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="action-btn" id="btn-redo" title="Redo"><i class="fa-solid fa-rotate-right"></i></button>
+        <div class="divider"></div>
+        <button class="action-btn positive" id="btn-confirm" title="Confirm Build" style="display:none;"><i class="fa-solid fa-check"></i></button>
+        <button class="action-btn negative" id="btn-cancel" title="Cancel Build" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+        <div class="divider"></div>
+        <button class="action-btn" id="Save" title="Save Game"><i class="fa-solid fa-floppy-disk"></i></button>
+        <button class="action-btn" id="Load" title="Load Game"><i class="fa-solid fa-folder-open"></i></button>
+    </div>
+
+    <!-- Context Actions (Select Object) -->
+    <div id="context-actions" class="glass-panel" style="display:none;">
+        <button id="duplicateObject" class="action-btn"><i class="fa-solid fa-copy"></i></button>
+        <button id="deleteObject" class="action-btn negative"><i class="fa-solid fa-trash"></i></button>
+        <button id="closeContextPanel" class="action-btn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Guidance HUD -->
+    <div id="hud-guidance" class="guidance-tooltip">
+        Click to start road
+    </div>
+
+    <!-- Audio Effects -->
+    <audio id="sfx-click" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <audio id="sfx-build" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="sfx-error" src="https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3"></audio>
+
+    <!-- Main Content -->
+    <main>
+        <div id="canvas-container"></div>
+    </main>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
