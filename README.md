@@ -2,7 +2,7 @@
 
 **Gamifying Rural Development through Drone Land Survey Maps & 3D Simulation**
 
-> **Winner - Smart India Hackathon 2024 (Problem Statement 1704)**
+> **Finalist - Smart India Hackathon 2024 (Problem Statement 1704)**
 > Developed by Team **JavaChip**
 
 Village Craft is an immersive, 3D web-based simulation platform designed to bridge the gap between rural development planning and community engagement. By utilizing real-world drone imagery and GIS data, the platform allows village youth and stakeholders to visualize, plan, and suggest infrastructure improvements directly to the Gram Panchayat in a gamified, intuitive environment.
