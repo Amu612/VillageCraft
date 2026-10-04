@@ -5,7 +5,7 @@ export class TerrainManager {
         this.scene = scene;
         this.terrainMesh = null;
         this.heightScale = 30;
-        this.worldSize = 400;
+        this.worldSize = 800;
 
         // Real World Coordinates (User Provided)
         this.bounds = {
@@ -24,43 +24,46 @@ export class TerrainManager {
     async loadTerrain(heightmapUrl, textureUrl) {
         console.log("Loading Terrain:", heightmapUrl, textureUrl);
 
-        // 1. Load Images
         let heightImage = null;
         let textureImage = null;
-        try {
-            const promises = [this.loadImage(textureUrl)];
-            if (heightmapUrl) {
-                promises.push(this.loadImage(heightmapUrl));
+
+        // Load Texture with primary and fallback options
+        const textureCandidates = [textureUrl, './assets/texture.png', './assets/lalpur_c.png'].filter(Boolean);
+        for (const candidate of textureCandidates) {
+            try {
+                textureImage = await this.loadImage(candidate);
+                if (textureImage) {
+                    console.log(`Successfully loaded texture from: ${candidate}`);
+                    break;
+                }
+            } catch (e) {
+                console.warn(`Failed to load texture from candidate ${candidate}:`, e);
             }
-
-            const results = await Promise.all(promises);
-            textureImage = results[0];
-            if (heightmapUrl) heightImage = results[1];
-
-        } catch (e) {
-            console.error("Failed to load map assets", e);
-            return;
         }
 
-        // 2. Get Data
+        // Load Heightmap if provided
+        if (heightmapUrl) {
+            try {
+                heightImage = await this.loadImage(heightmapUrl);
+            } catch (e) {
+                console.warn(`Failed to load heightmap from ${heightmapUrl}, falling back to flat terrain.`, e);
+            }
+        }
+
         const segments = 256;
         let data;
 
         if (heightImage) {
             data = this.getHeightData(heightImage);
         } else {
-            console.log("No heightmap provided. Generating flat terrain.");
-            data = new Uint8Array(segments * segments * 4).fill(0);
+            console.log("No heightmap loaded. Generating flat terrain data.");
+            data = new Uint8Array(segments * segments).fill(0);
         }
 
-        // Store data for lookups
         this.heightData = data;
         this.segments = segments;
 
-        // 3. Create Geometry
         const geometry = new THREE.PlaneGeometry(this.worldSize, this.worldSize, segments - 1, segments - 1);
-
-        // 4. Apply Heights
         const vertices = geometry.attributes.position.array;
 
         for (let i = 0, j = 0; i < vertices.length; i += 3, j++) {
@@ -70,57 +73,58 @@ export class TerrainManager {
 
         geometry.computeVertexNormals();
 
-        // 5. Material
-        const texture = new THREE.CanvasTexture(textureImage);
-        texture.encoding = THREE.sRGBEncoding;
+        let material;
+        if (textureImage) {
+            const texture = new THREE.CanvasTexture(textureImage);
+            texture.encoding = THREE.sRGBEncoding;
+            material = new THREE.MeshStandardMaterial({
+                map: texture,
+                roughness: 0.9,
+                metalness: 0.1,
+                side: THREE.DoubleSide
+            });
+        } else {
+            console.warn("Using fallback colored material for terrain.");
+            material = new THREE.MeshStandardMaterial({
+                color: 0x448844,
+                roughness: 0.9,
+                metalness: 0.1,
+                side: THREE.DoubleSide
+            });
+        }
 
-        const material = new THREE.MeshStandardMaterial({
-            map: texture,
-            roughness: 0.9,
-            metalness: 0.1,
-            side: THREE.DoubleSide,
-            transparent: true,
-            alphaTest: 0.1
-        });
-
-        // 6. Mesh
         this.terrainMesh = new THREE.Mesh(geometry, material);
-        this.terrainMesh.rotation.x = -Math.PI / 2; // Flat on ground
+        this.terrainMesh.rotation.x = -Math.PI / 2;
         this.terrainMesh.receiveShadow = true;
-
-        // Adjust position Y. For flat map, maybe 0 is better? 
-        // Stick to -5 so it's slightly below grid if any? Or 0.
-        this.terrainMesh.position.y = -0.1; // Just below any grid helpers
+        this.terrainMesh.position.y = -0.1;
 
         this.scene.add(this.terrainMesh);
-        console.log("Terrain Added!");
+        console.log("Terrain Mesh added to scene!");
         return this.terrainMesh;
     }
 
     getHeightAt(x, z) {
-        // For flat map, just return the mesh position Y
-        if (!this.heightData) return this.terrainMesh?.position.y || 0;
+        const meshY = (this.terrainMesh && this.terrainMesh.position) ? this.terrainMesh.position.y : 0;
+        if (!this.heightData) return meshY;
 
-        // If we have data, we calculate (logic preserved from before)
         const half = this.worldSize / 2;
         const u = (x + half) / this.worldSize;
         const v = 1 - (z + half) / this.worldSize;
 
-        if (u < 0 || u > 1 || v < 0 || v > 1) return this.terrainMesh.position.y;
+        if (u < 0 || u > 1 || v < 0 || v > 1) return meshY;
 
         const col = Math.floor(u * (this.segments - 1));
-        const row = Math.floor((1 - v) * (this.segments - 1)); // row 0 is North (top of image), v=1 is North
+        const row = Math.floor((1 - v) * (this.segments - 1));
         const index = (row * this.segments) + col;
         const hVal = this.heightData[index] || 0;
         const worldHeight = (hVal / 255) * this.heightScale;
 
-        return worldHeight + this.terrainMesh.position.y;
+        return worldHeight + meshY;
     }
 
     loadImage(url) {
         return new Promise((resolve, reject) => {
             const img = new Image();
-            img.crossOrigin = "Anonymous";
             img.onload = () => resolve(img);
             img.onerror = (e) => reject(e);
             img.src = url;
